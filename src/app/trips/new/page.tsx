@@ -20,6 +20,8 @@ import {
   Navigation,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import CostSplitCalculator from "@/components/CostSplitCalculator";
+import { CostItem } from "@/types/costs";
 
 function NewTripContent() {
   const router = useRouter();
@@ -49,6 +51,17 @@ function NewTripContent() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [costItems, setCostItems] = useState<CostItem[]>([]);
+
+  const handleCostItemsChange = (items: CostItem[], perPersonBudget: number) => {
+    setCostItems(items);
+    if (perPersonBudget > 0) {
+      setForm((prev) => ({
+        ...prev,
+        budgetPerPerson: String(perPersonBudget),
+      }));
+    }
+  };
 
   const destinations = [
     "Cox's Bazar",
@@ -164,6 +177,7 @@ function NewTripContent() {
           hotelName: form.hotelName || undefined,
           hotelAddress: form.hotelAddress || undefined,
           meetingPoint: form.meetingPoint || undefined,
+          costBreakdown: costItems.length > 0 ? costItems : undefined,
         }),
       });
 
@@ -347,11 +361,24 @@ function NewTripContent() {
             )}
           </div>
 
+          {/* AI-Powered Cost Split Architecture */}
+          <div className="space-y-3 pt-2">
+            <CostSplitCalculator
+              initialDestination={
+                form.destination === "Other"
+                  ? form.customDestination || "Sajek Valley"
+                  : form.destination
+              }
+              initialGroupSize={parseInt(form.maxGroupSize) || 4}
+              onItemsChange={handleCostItemsChange}
+            />
+          </div>
+
           {/* Budget & Group Size */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-800 mb-1.5">
-                Target Budget Per Person (৳ BDT) *
+                Calculated Budget Per Person (৳ BDT) *
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold">
@@ -366,9 +393,12 @@ function NewTripContent() {
                   onChange={(e) =>
                     setForm({ ...form, budgetPerPerson: e.target.value })
                   }
-                  className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-300 text-slate-900 bg-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-300 text-slate-900 bg-white font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
+              <p className="text-[11px] text-stone-500 mt-1">
+                Auto-calculated from your itemized expenses above, or fine-tune manually.
+              </p>
             </div>
 
             <div>

@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate, timeAgo } from "@/lib/utils";
 import UserAvatar from "@/components/UserAvatar";
+import CostSplitCalculator from "@/components/CostSplitCalculator";
+import { CostItem } from "@/types/costs";
 
 function TripDetailContent({
   params,
@@ -203,6 +205,18 @@ function TripDetailContent({
   const currentSavings = soloCost - perPersonCost;
   const currentSavingsPercent = Math.round((currentSavings / soloCost) * 100);
 
+  let parsedCostItems: CostItem[] | undefined = undefined;
+  if (trip.costBreakdown) {
+    try {
+      parsedCostItems =
+        typeof trip.costBreakdown === "string"
+          ? JSON.parse(trip.costBreakdown)
+          : trip.costBreakdown;
+    } catch (e) {
+      console.error("Failed to parse trip costBreakdown", e);
+    }
+  }
+
   const isMemberOrHost = trip.isMember || trip.isCreator || session?.user?.id === trip.creatorId;
   const isCreator = trip.isCreator || session?.user?.id === trip.creatorId;
 
@@ -327,6 +341,14 @@ function TripDetailContent({
                 </div>
               </div>
             </div>
+
+            {/* Itemized Cost Architecture & Fair-Share Split */}
+            <CostSplitCalculator
+              initialDestination={trip.destination}
+              initialGroupSize={currentMembers}
+              initialItems={parsedCostItems}
+              editable={false}
+            />
 
             {/* Secret Safety Guardrail Details */}
             <div className={`rounded-2xl border p-6 transition ${

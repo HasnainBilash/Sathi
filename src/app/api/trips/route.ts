@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const {
       title, destination, description, startDate, endDate,
       budgetPerPerson, maxGroupSize, pace, roomSharing,
-      hotelName, hotelAddress, meetingPoint,
+      hotelName, hotelAddress, meetingPoint, costBreakdown,
     } = body;
 
     if (!title || !destination || !startDate || !endDate || !budgetPerPerson) {
@@ -74,6 +74,12 @@ export async function POST(req: NextRequest) {
         hotelName,
         hotelAddress,
         meetingPoint,
+        costBreakdown:
+          typeof costBreakdown === "string"
+            ? costBreakdown
+            : costBreakdown
+            ? JSON.stringify(costBreakdown)
+            : undefined,
         creatorId: session.user.id,
         members: {
           create: { userId: session.user.id },

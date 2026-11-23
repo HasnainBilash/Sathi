@@ -57,6 +57,9 @@ model Trip {
   hotelAddress    String?
   meetingPoint    String?
 
+  // Detailed Cost Breakdown JSON (name, category, amount, isShared, notes)
+  costBreakdown   String?   @db.Text
+
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

@@ -15,19 +15,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import CostSplitCalculator from "@/components/CostSplitCalculator";
 
 export default function HomePage() {
-  // Interactive Single Supplement calculator
-  const [roomCost, setRoomCost] = useState(6000);
-  const [transportCost, setTransportCost] = useState(4000);
-  const [groupSize, setGroupSize] = useState(3);
-
-  const totalTripCost = roomCost + transportCost;
-  const soloCost = totalTripCost;
-  const splitCost = Math.ceil(totalTripCost / groupSize);
-  const savings = soloCost - splitCost;
-  const savingsPercent = Math.round((savings / soloCost) * 100);
-
   const popularDestinations = [
     {
       name: "Sajek Valley",
@@ -114,116 +104,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* The Single Supplement Calculator */}
+      {/* The Single Supplement & Cost Architecture Calculator */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="bg-white rounded-3xl border border-stone-200 shadow-sm p-6 sm:p-10 space-y-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <div className="text-[#155e39] font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <TrendingDown size={16} /> Cost Split Calculator
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 mt-1">
-                How much does splitting save you?
-              </h2>
-            </div>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200">
-              Interactive estimate
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Sliders */}
-            <div className="lg:col-span-7 space-y-6">
-              <div>
-                <div className="flex justify-between text-sm font-semibold mb-2 text-stone-800">
-                  <span>Accommodation Cost (Hotel / Resort / Cottage)</span>
-                  <span className="font-bold text-stone-900">{formatCurrency(roomCost)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="2000"
-                  max="20000"
-                  step="500"
-                  value={roomCost}
-                  onChange={(e) => setRoomCost(Number(e.target.value))}
-                  className="w-full accent-[#155e39] cursor-pointer h-2 bg-stone-100 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm font-semibold mb-2 text-stone-800">
-                  <span>Shared Transport (Chander Gari / Private Car / Boat)</span>
-                  <span className="font-bold text-stone-900">{formatCurrency(transportCost)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="1000"
-                  max="15000"
-                  step="500"
-                  value={transportCost}
-                  onChange={(e) => setTransportCost(Number(e.target.value))}
-                  className="w-full accent-[#155e39] cursor-pointer h-2 bg-stone-100 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm font-semibold mb-2 text-stone-800">
-                  <span>Group Size (Companions)</span>
-                  <span className="font-bold text-[#155e39]">{groupSize} Travelers</span>
-                </div>
-                <div className="grid grid-cols-6 gap-2">
-                  {[1, 2, 3, 4, 5, 6].map((num) => (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => setGroupSize(num)}
-                      className={`py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                        groupSize === num
-                          ? "bg-stone-900 text-white shadow-xs"
-                          : "bg-stone-100 hover:bg-stone-200 text-stone-700"
-                      }`}
-                    >
-                      {num} {num === 1 ? "(Solo)" : ""}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Clean Result Panel */}
-            <div className="lg:col-span-5 bg-stone-900 rounded-2xl p-7 text-white space-y-5">
-              <div>
-                <div className="text-stone-400 text-xs font-medium uppercase tracking-wider">
-                  Your Cost Per Person
-                </div>
-                <div className="text-4xl font-extrabold tracking-tight mt-1">
-                  {formatCurrency(splitCost)}
-                </div>
-                <div className="text-xs text-stone-400 mt-1">
-                  vs {formatCurrency(soloCost)} when traveling solo
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-stone-800 space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Single Supplement Saved:</span>
-                  <span className="font-bold text-white text-sm">{formatCurrency(savings)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Total Savings:</span>
-                  <span className="font-bold text-emerald-400 text-sm">{savingsPercent}% OFF</span>
-                </div>
-              </div>
-
-              <Link
-                href="/trips"
-                className="block w-full py-3 rounded-xl bg-white text-stone-950 font-bold hover:bg-stone-100 transition text-center text-xs shadow-xs"
-              >
-                Browse Open Trips
-              </Link>
-            </div>
-          </div>
-        </div>
+        <CostSplitCalculator
+          initialDestination="Sajek Valley"
+          initialGroupSize={3}
+          editable={true}
+        />
       </section>
 
       {/* How Sathi Works */}
