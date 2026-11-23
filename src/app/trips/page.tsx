@@ -12,8 +12,14 @@ import {
   Compass,
   AlertCircle,
   Sparkles,
+  Palmtree,
+  Mountain,
+  Coffee,
+  Waves,
+  Trees,
 } from "lucide-react";
 import TripCard from "@/components/TripCard";
+import { Button } from "@/components/ui/button";
 
 // Fallback prototype data so the board is always populated
 const SAMPLE_TRIPS = [
@@ -139,6 +145,39 @@ const SAMPLE_TRIPS = [
     ],
     _count: { members: 4 },
   },
+  {
+    id: "sample-6",
+    title: "Sylhet Ratargul Swamp & Jaflong Day Trip",
+    destination: "Sylhet",
+    description: "Cruising the freshwater swamp forest and stone collection river in Jaflong. Looking for 2 people to split microbus.",
+    startDate: new Date(Date.now() + 86400000 * 12).toISOString(),
+    endDate: new Date(Date.now() + 86400000 * 15).toISOString(),
+    budgetPerPerson: 4800,
+    maxGroupSize: 4,
+    pace: "MODERATE",
+    roomSharing: "FLEXIBLE",
+    status: "OPEN",
+    creator: {
+      id: "user-13",
+      name: "Sadia Islam",
+      isVerified: true,
+      image: null,
+    },
+    members: [
+      { user: { id: "user-13", name: "Sadia Islam", image: null } },
+    ],
+    _count: { members: 1 },
+  },
+];
+
+const CATEGORIES = [
+  { name: "ALL", label: "All Destinations", icon: Compass },
+  { name: "Cox's Bazar", label: "Beaches", icon: Palmtree },
+  { name: "Sajek Valley", label: "Cloud Hills", icon: Mountain },
+  { name: "Srimangal", label: "Tea Trails", icon: Coffee },
+  { name: "Bandarban", label: "High Treks", icon: Mountain },
+  { name: "Tanguar Haor", label: "Haor Cruise", icon: Waves },
+  { name: "Sylhet", label: "Swamp & Falls", icon: Trees },
 ];
 
 function TripBoardContent() {
@@ -166,14 +205,11 @@ function TripBoardContent() {
       } catch (err) {
         console.warn("Using sample trip board data", err);
       }
-      // If DB empty or not yet connected, use sample trips
       setTrips(SAMPLE_TRIPS);
       setLoading(false);
     }
     loadTrips();
   }, []);
-
-  const destinations = ["ALL", "Cox's Bazar", "Sajek Valley", "Srimangal", "Bandarban", "Tanguar Haor", "Sylhet"];
 
   const filteredTrips = useMemo(() => {
     return trips.filter((trip) => {
@@ -193,73 +229,80 @@ function TripBoardContent() {
   }, [trips, search, selectedDestination, selectedPace]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Trip Board <span className="text-emerald-600">ভ্রমণ সাথী</span>
-          </h1>
-          <p className="text-slate-600 mt-1">
-            Browse verified trips, split travel costs, and request to join trusted companions.
-          </p>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      {/* Category Icons Carousel (Airbnb / Better-Design pattern) */}
+      <div className="border-b border-slate-200/80 pb-3">
+        <div className="flex items-center gap-6 sm:gap-10 overflow-x-auto scrollbar-none py-1">
+          {CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const isSelected = selectedDestination === cat.name;
+            return (
+              <button
+                key={cat.name}
+                type="button"
+                onClick={() => setSelectedDestination(cat.name)}
+                className={`flex flex-col items-center gap-2 pb-2 px-1 border-b-2 whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                  isSelected
+                    ? "border-emerald-600 text-emerald-800 font-bold opacity-100"
+                    : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 opacity-75 hover:opacity-100"
+                }`}
+              >
+                <Icon size={22} className={isSelected ? "text-emerald-600" : "text-slate-600"} />
+                <span className="text-xs">{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
-        <Link
-          href="/trips/new"
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition shadow-md shadow-emerald-600/20"
-        >
-          <PlusCircle size={18} />
-          Post a Trip
-        </Link>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="text"
-              placeholder="Search by trip title or destination (e.g. Sajek, Sea Beach)..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 text-sm"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedPace}
-              onChange={(e) => setSelectedPace(e.target.value)}
-              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            >
-              <option value="ALL">All Paces</option>
-              <option value="RELAXED">Relaxed</option>
-              <option value="MODERATE">Moderate</option>
-              <option value="ADVENTUROUS">Adventurous</option>
-            </select>
-          </div>
+      {/* Floating Search & Filter Pill Bar */}
+      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search destination, cottage, trek (e.g. Sajek, Sea Beach)..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 text-sm bg-slate-50/50"
+          />
         </div>
 
-        {/* Destination Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-sm scrollbar-none">
-          <span className="text-xs text-slate-400 uppercase font-semibold flex items-center gap-1 mr-1">
-            <MapPin size={12} /> Routes:
-          </span>
-          {destinations.map((dest) => (
-            <button
-              key={dest}
-              type="button"
-              onClick={() => setSelectedDestination(dest)}
-              className={`px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-medium transition ${
-                selectedDestination === dest
-                  ? "bg-emerald-600 text-white"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-              }`}
-            >
-              {dest === "ALL" ? "All Bangladesh" : dest}
-            </button>
-          ))}
+        {/* Pace Filter & Actions */}
+        <div className="flex items-center gap-3">
+          <select
+            value={selectedPace}
+            onChange={(e) => setSelectedPace(e.target.value)}
+            className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+          >
+            <option value="ALL">All Travel Paces</option>
+            <option value="RELAXED">🧘 Relaxed Pace</option>
+            <option value="MODERATE">🚶 Moderate Sightseeing</option>
+            <option value="ADVENTUROUS">🏔️ Adventurous Hiking</option>
+          </select>
+
+          <Link
+            href="/trips/new"
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-xs flex items-center gap-1.5 whitespace-nowrap active:scale-[0.97]"
+          >
+            <PlusCircle size={15} />
+            Post Trip
+          </Link>
+        </div>
+      </div>
+
+      {/* Trip Counter & Context Header */}
+      <div className="flex items-center justify-between text-xs text-slate-500">
+        <div>
+          Showing <span className="font-bold text-slate-900">{filteredTrips.length}</span> verified travel plans
+          {selectedDestination !== "ALL" && (
+            <span> in <span className="font-semibold text-emerald-700">{selectedDestination}</span></span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+          <Sparkles size={14} className="text-emerald-500" />
+          Every post is NID-verified
         </div>
       </div>
 
@@ -270,23 +313,23 @@ function TripBoardContent() {
           <p className="text-slate-500 text-sm">Loading verified trips...</p>
         </div>
       ) : filteredTrips.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 space-y-4">
+        <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-4">
           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
             <Compass size={24} />
           </div>
           <h3 className="text-lg font-bold text-slate-800">No trips match your filter</h3>
           <p className="text-sm text-slate-500 max-w-md mx-auto">
-            Be the first to post a trip for this route and gather companions to split the costs!
+            Be the first verified traveler to post a plan for this destination!
           </p>
           <Link
             href="/trips/new"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-500"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-500"
           >
             <PlusCircle size={16} /> Post This Trip
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
           {filteredTrips.map((trip) => (
             <TripCard key={trip.id} trip={trip} />
           ))}
