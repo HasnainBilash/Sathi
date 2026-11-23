@@ -17,6 +17,7 @@ import {
   Coffee,
   Waves,
   Trees,
+  ShieldCheck,
 } from "lucide-react";
 import TripCard from "@/components/TripCard";
 import { Button } from "@/components/ui/button";
@@ -230,8 +231,8 @@ function TripBoardContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-      {/* Category Icons Carousel (Airbnb / Better-Design pattern) */}
-      <div className="border-b border-slate-200/80 pb-3">
+      {/* Category Icons Carousel */}
+      <div className="border-b border-stone-200 pb-3">
         <div className="flex items-center gap-6 sm:gap-10 overflow-x-auto scrollbar-none py-1">
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon;
@@ -241,13 +242,13 @@ function TripBoardContent() {
                 key={cat.name}
                 type="button"
                 onClick={() => setSelectedDestination(cat.name)}
-                className={`flex flex-col items-center gap-2 pb-2 px-1 border-b-2 whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                className={`flex flex-col items-center gap-2 pb-2 px-1 border-b-2 whitespace-nowrap transition cursor-pointer ${
                   isSelected
-                    ? "border-emerald-600 text-emerald-800 font-bold opacity-100"
-                    : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 opacity-75 hover:opacity-100"
+                    ? "border-stone-900 text-stone-900 font-bold opacity-100"
+                    : "border-transparent text-stone-400 hover:text-stone-700 hover:border-stone-300 opacity-75 hover:opacity-100"
                 }`}
               >
-                <Icon size={22} className={isSelected ? "text-emerald-600" : "text-slate-600"} />
+                <Icon size={20} className={isSelected ? "text-stone-900" : "text-stone-500"} />
                 <span className="text-xs">{cat.label}</span>
               </button>
             );
@@ -255,17 +256,17 @@ function TripBoardContent() {
         </div>
       </div>
 
-      {/* Floating Search & Filter Pill Bar */}
-      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      {/* Floating Search & Filter Bar */}
+      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-stone-200 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" size={17} />
           <input
             type="text"
             placeholder="Search destination, cottage, trek (e.g. Sajek, Sea Beach)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 text-sm bg-slate-50/50"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-900 text-stone-800 text-sm bg-stone-50/50"
           />
         </div>
 
@@ -274,17 +275,17 @@ function TripBoardContent() {
           <select
             value={selectedPace}
             onChange={(e) => setSelectedPace(e.target.value)}
-            className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            className="px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-700 bg-white focus:outline-none focus:ring-2 focus:ring-stone-900 cursor-pointer"
           >
             <option value="ALL">All Travel Paces</option>
-            <option value="RELAXED">🧘 Relaxed Pace</option>
-            <option value="MODERATE">🚶 Moderate Sightseeing</option>
-            <option value="ADVENTUROUS">🏔️ Adventurous Hiking</option>
+            <option value="RELAXED">Relaxed Pace</option>
+            <option value="MODERATE">Moderate Sightseeing</option>
+            <option value="ADVENTUROUS">Adventurous Hiking</option>
           </select>
 
           <Link
             href="/trips/new"
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-xs flex items-center gap-1.5 whitespace-nowrap active:scale-[0.97]"
+            className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1.5 whitespace-nowrap active:scale-[0.97]"
           >
             <PlusCircle size={15} />
             Post Trip
@@ -293,15 +294,15 @@ function TripBoardContent() {
       </div>
 
       {/* Trip Counter & Context Header */}
-      <div className="flex items-center justify-between text-xs text-slate-500">
+      <div className="flex items-center justify-between text-xs text-stone-500">
         <div>
-          Showing <span className="font-bold text-slate-900">{filteredTrips.length}</span> verified travel plans
+          Showing <span className="font-bold text-stone-900">{filteredTrips.length}</span> verified travel plans
           {selectedDestination !== "ALL" && (
-            <span> in <span className="font-semibold text-emerald-700">{selectedDestination}</span></span>
+            <span> in <span className="font-semibold text-stone-900">{selectedDestination}</span></span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-          <Sparkles size={14} className="text-emerald-500" />
+        <div className="flex items-center gap-1.5 text-[#155e39] font-semibold">
+          <ShieldCheck size={14} className="text-[#155e39]" />
           Every post is NID-verified
         </div>
       </div>
