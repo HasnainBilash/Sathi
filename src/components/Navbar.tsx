@@ -66,6 +66,16 @@ export default function Navbar() {
               Post a Trip
             </Link>
 
+            {session && (
+              <Link
+                href="/my-trips"
+                className="px-3.5 py-2 rounded-full text-xs font-semibold text-slate-700 hover:bg-slate-100 transition flex items-center gap-1.5"
+              >
+                <Compass size={14} className="text-emerald-600" />
+                My Trips
+              </Link>
+            )}
+
             <Link
               href="/verify"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 transition"
@@ -144,6 +154,15 @@ export default function Navbar() {
             >
               Post a Trip
             </Link>
+            {session && (
+              <Link
+                href="/my-trips"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2.5 text-sm font-semibold text-emerald-800 bg-emerald-50/60 rounded-xl"
+              >
+                My Planned & Hosted Trips
+              </Link>
+            )}
             <Link
               href="/verify"
               onClick={() => setMenuOpen(false)}

@@ -130,13 +130,23 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <Link
-            href="/verify"
-            className="px-4 py-2 rounded-xl border border-emerald-600 text-emerald-700 text-xs font-bold hover:bg-emerald-50 transition flex items-center gap-1.5"
-          >
-            <ShieldCheck size={16} />
-            {profile.isVerified ? "Verification Status" : "Verify NID Now"}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/my-trips"
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+            >
+              <Compass size={15} />
+              My Planned Trips
+            </Link>
+
+            <Link
+              href="/verify"
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-1.5"
+            >
+              <ShieldCheck size={15} className="text-emerald-600" />
+              {profile.isVerified ? "NID Verified" : "Verify NID"}
+            </Link>
+          </div>
         </div>
 
         <p className="text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
