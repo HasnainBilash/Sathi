@@ -1,0 +1,171 @@
+// Sathi — Verified Trip Partners for Bangladesh
+// Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───────────────────────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?   @unique
+  password      String
+  image         String?
+  bio           String?
+
+  // Verification
+  isVerified    Boolean   @default(false)
+  verifiedAt    DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  trips         Trip[]          @relation("TripCreator")
+  joinRequests  JoinRequest[]
+  messages      Message[]
+  givenRefs     Reference[]     @relation("ReferenceGiver")
+  receivedRefs  Reference[]     @relation("ReferenceReceiver")
+  tripMembers   TripMember[]
+
+  @@map("users")
+}
+
+// ─── Trips ───────────────────────────────────────────────────────────
+model Trip {
+  id              String    @id @default(cuid())
+  title           String
+  destination     String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime
+  budgetPerPerson Float
+  maxGroupSize    Int       @default(5)
+  pace            TripPace  @default(MODERATE)
+  roomSharing     RoomSharing @default(FLEXIBLE)
+  status          TripStatus @default(OPEN)
+
+  // Hidden info (visible only to approved members)
+  hotelName       String?
+  hotelAddress    String?
+  meetingPoint    String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  creatorId       String
+  creator         User      @relation("TripCreator", fields: [creatorId], references: [id])
+  joinRequests    JoinRequest[]
+  members         TripMember[]
+  messages        Message[]
+  references      Reference[]
+
+  @@map("trips")
+}
+
+enum TripPace {
+  RELAXED
+  MODERATE
+  ADVENTUROUS
+}
+
+enum RoomSharing {
+  WILLING
+  NOT_WILLING
+  FLEXIBLE
+}
+
+enum TripStatus {
+  OPEN
+  FULL
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ─── Trip Members ────────────────────────────────────────────────────
+model TripMember {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([tripId, userId])
+  @@map("trip_members")
+}
+
+// ─── Join Requests ───────────────────────────────────────────────────
+model JoinRequest {
+  id        String        @id @default(cuid())
+  message   String?
+  status    RequestStatus @default(PENDING)
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  tripId    String
+  userId    String
+
+  trip      Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id])
+
+  @@unique([tripId, userId])
+  @@map("join_requests")
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// ─── Messages (Group Chat) ──────────────────────────────────────────
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  tripId    String
+  userId    String
+
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("messages")
+}
+
+// ─── Post-Trip References ───────────────────────────────────────────
+model Reference {
+  id              String   @id @default(cuid())
+
+  // Ratings (1-5)
+  punctuality     Int
+  communication   Int
+  trustworthiness Int
+  overallRating   Int
+  comment         String?
+
+  createdAt       DateTime @default(now())
+
+  tripId          String
+  giverId         String
+  receiverId      String
+
+  trip            Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  giver           User     @relation("ReferenceGiver", fields: [giverId], references: [id])
+  receiver        User     @relation("ReferenceReceiver", fields: [receiverId], references: [id])
+
+  @@unique([tripId, giverId, receiverId])
+  @@map("references")
+}
