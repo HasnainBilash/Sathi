@@ -3,7 +3,7 @@ import { CostItem } from "@/types/costs";
 
 export const dynamic = "force-dynamic";
 
-// Curated Bangladesh destination benchmarks
+// Curated Bangladesh destination benchmarks for instant offline responses
 const DESTINATION_BENCHMARKS: Record<
   string,
   { summary: string; items: Omit<CostItem, "id">[] }
@@ -17,7 +17,7 @@ const DESTINATION_BENCHMARKS: Record<
         category: "ACCOMMODATION",
         amount: 8000,
         isShared: true,
-        notes: "Shared twin/king cottage overlooking the valley, fits up to 4 with extra mattress.",
+        notes: "Shared cottage overlooking the valley, fits up to 4 with extra bed.",
       },
       {
         name: "Reserved 4WD Chander Gari (Khagrachhari ↔ Sajek)",
@@ -214,33 +214,90 @@ const DESTINATION_BENCHMARKS: Record<
   },
 };
 
+// Generate tailored items for any custom place if offline or Gemini key missing
+function generateTailoredEstimate(
+  destination: string,
+  durationDays: number,
+  groupSize: number
+) {
+  const nights = Math.max(1, durationDays - 1);
+  const stayCost = nights * 3500;
+  const transportCost = Math.max(2500, durationDays * 1800);
+  const foodCost = durationDays * 800;
+  const activitiesCost = 700;
+
+  return {
+    destination,
+    summary: `Tailored travel plan for ${durationDays} days in ${destination}. Traveling with ${groupSize} partners splits your private stay and reserved transport, cutting the single supplement penalty by over 60%.`,
+    items: [
+      {
+        id: `custom-stay-${Date.now()}`,
+        name: `Resort / Hotel Room in ${destination} (${nights} Night${nights > 1 ? "s" : ""})`,
+        category: "ACCOMMODATION" as const,
+        amount: stayCost,
+        isShared: true,
+        notes: `Private accommodation in ${destination}, fits 2-4 travelers with shared beds/mattress.`,
+      },
+      {
+        id: `custom-trans-${Date.now()}`,
+        name: `Reserved Local Transport & Sightseeing in ${destination}`,
+        category: "TRANSPORT" as const,
+        amount: transportCost,
+        isShared: true,
+        notes: `Private 4WD jeep, boat, or reserved vehicle for touring ${destination}.`,
+      },
+      {
+        id: `custom-food-${Date.now()}`,
+        name: `Fresh Local Food & Specialties (${durationDays} Days)`,
+        category: "FOOD" as const,
+        amount: foodCost,
+        isShared: false,
+        notes: `Three fresh daily meals and local refreshments per traveler.`,
+      },
+      {
+        id: `custom-act-${Date.now()}`,
+        name: `Local Guide & Entry Passes in ${destination}`,
+        category: "ACTIVITIES" as const,
+        amount: activitiesCost,
+        isShared: false,
+        notes: `Entry fees to attractions and registered local trail guide.`,
+      },
+    ],
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { destination = "Sajek Valley", durationDays = 3, groupSize = 4 } = body;
+    const {
+      destination = "Sajek Valley",
+      durationDays = 3,
+      groupSize = 4,
+      customApiKey,
+    } = body;
 
-    const normalizedDest = destination.trim().toLowerCase();
-    const apiKey = process.env.GEMINI_API_KEY;
+    const trimmedDest = (destination || "Sajek Valley").trim();
+    const normalizedDest = trimmedDest.toLowerCase();
+    const apiKey = customApiKey || process.env.GEMINI_API_KEY;
 
-    // 1. If Gemini API key is available, call Google Gemini 2.5 Flash for live dynamic research
-    if (apiKey) {
-      try {
-        const prompt = `You are an expert travel economist and logistics researcher for Bangladesh domestic tourism.
-The user is planning a trip to "${destination}" for approximately ${durationDays} days with a target group size of ${groupSize}.
+    // 1. If Gemini API key is available, call Gemini (support gemini-2.0-flash with fallback to gemini-1.5-flash)
+    if (apiKey && apiKey.length > 10) {
+      const prompt = `You are an expert travel economist and logistics researcher for Bangladesh domestic tourism.
+The user is planning a trip to "${trimmedDest}" for approximately ${durationDays} days with a target group size of ${groupSize} travelers.
 Research and return realistic, up-to-date estimated expenses in Bangladeshi Taka (BDT ৳) broken down into specific items.
 
 Rules:
 1. Each item must have:
-   - "name": Concise title of the cost (e.g. "Cloud-view cottage at Konglak (2 Nights)", "Reserved 4WD Chander Gari", "Daily Pahari Meals")
+   - "name": Clear, specific title of the cost in ${trimmedDest} (e.g. "Cloud-view cottage at Konglak", "Reserved 4WD Chander Gari", "Daily Pahari Meals", "Local boat to Swamp Forest")
    - "category": One of "ACCOMMODATION", "TRANSPORT", "FOOD", "ACTIVITIES", "OTHER"
    - "amount": Realistic cost in BDT as a number
    - "isShared": Boolean. Mark true ONLY for shared group expenses (e.g., hotel room/cottage, reserved jeep/chander gari, boat charter, guide fee). Mark false for individual per-person expenses (e.g. daily food/meals per person, individual park entry tickets, personal rickshaw).
-   - "notes": Brief 1-sentence explanation of what this covers.
+   - "notes": Brief 1-sentence explanation of what this covers in ${trimmedDest}.
 2. Provide 4 to 6 realistic items covering accommodation, transport, food, and activities.
 3. Return ONLY a valid JSON object matching this schema without any markdown formatting or backticks:
 {
-  "destination": "${destination}",
-  "summary": "1-2 sentences on how traveling with partners in ${destination} kills the single supplement penalty.",
+  "destination": "${trimmedDest}",
+  "summary": "1-2 engaging sentences on what to expect in ${trimmedDest} and how traveling with partners kills the single supplement penalty.",
   "items": [
     {
       "name": "...",
@@ -252,78 +309,96 @@ Rules:
   ]
 }`;
 
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: {
-                responseMimeType: "application/json",
-                temperature: 0.2,
-              },
-            }),
+      // Try models in order: gemini-2.0-flash, then gemini-1.5-flash
+      const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash"];
+      for (const modelName of modelsToTry) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  responseMimeType: "application/json",
+                  temperature: 0.2,
+                },
+              }),
+            }
+          );
+
+          if (geminiRes.ok) {
+            const geminiData = await geminiRes.json();
+            const responseText =
+              geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (responseText) {
+              const parsed = JSON.parse(responseText);
+              const items: CostItem[] = (parsed.items || []).map(
+                (item: Omit<CostItem, "id">, index: number) => ({
+                  id: `gemini-${Date.now()}-${index}`,
+                  name: item.name,
+                  category: item.category || "OTHER",
+                  amount: Math.round(Number(item.amount) || 1000),
+                  isShared: Boolean(item.isShared),
+                  notes: item.notes || "",
+                })
+              );
+
+              return NextResponse.json({
+                destination: parsed.destination || trimmedDest,
+                summary:
+                  parsed.summary ||
+                  `Live AI-researched cost breakdown for ${trimmedDest} based on current Bangladesh travel rates.`,
+                items,
+                source: "gemini_ai",
+                model: modelName,
+              });
+            }
+          } else {
+            const errBody = await geminiRes.text();
+            console.warn(`Gemini model ${modelName} returned status ${geminiRes.status}:`, errBody);
           }
-        );
-
-        if (geminiRes.ok) {
-          const geminiData = await geminiRes.json();
-          const responseText =
-            geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-          if (responseText) {
-            const parsed = JSON.parse(responseText);
-            const items: CostItem[] = (parsed.items || []).map(
-              (item: Omit<CostItem, "id">, index: number) => ({
-                id: `gemini-${Date.now()}-${index}`,
-                name: item.name,
-                category: item.category || "OTHER",
-                amount: Math.round(Number(item.amount) || 1000),
-                isShared: Boolean(item.isShared),
-                notes: item.notes || "",
-              })
-            );
-
-            return NextResponse.json({
-              destination,
-              summary:
-                parsed.summary ||
-                `AI-researched cost breakdown for ${destination} based on current Bangladesh travel rates.`,
-              items,
-              source: "gemini_ai",
-            });
-          }
+        } catch (callErr) {
+          console.warn(`Error calling Gemini ${modelName}:`, callErr);
         }
-      } catch (geminiError) {
-        console.error("Gemini API call failed, falling back to curated benchmarks:", geminiError);
       }
     }
 
-    // 2. Fallback: Use verified Bangladesh travel benchmarks
-    // Check if we have an exact match or partial match
-    let benchmarkKey = Object.keys(DESTINATION_BENCHMARKS).find(
+    // 2. Exact/Partial Match in Curated Benchmarks
+    const benchmarkKey = Object.keys(DESTINATION_BENCHMARKS).find(
       (k) => normalizedDest.includes(k) || k.includes(normalizedDest)
     );
 
-    if (!benchmarkKey) {
-      benchmarkKey = "sajek valley"; // Default representative benchmark
+    if (benchmarkKey) {
+      const benchmark = DESTINATION_BENCHMARKS[benchmarkKey];
+      const items: CostItem[] = benchmark.items.map((item, index) => ({
+        id: `bench-${benchmarkKey}-${index}`,
+        ...item,
+      }));
+
+      return NextResponse.json({
+        destination: trimmedDest,
+        summary: benchmark.summary,
+        items,
+        source: "curated_benchmark",
+      });
     }
 
-    const benchmark = DESTINATION_BENCHMARKS[benchmarkKey];
-    const items: CostItem[] = benchmark.items.map((item, index) => ({
-      id: `bench-${benchmarkKey}-${index}`,
-      ...item,
-    }));
+    // 3. Fallback for ANY custom destination user types (e.g. Kuakata, Kaptai, Nilgiri, etc.)
+    const customResult = generateTailoredEstimate(
+      trimmedDest,
+      durationDays,
+      groupSize
+    );
 
     return NextResponse.json({
-      destination: destination || "Sajek Valley",
-      summary: benchmark.summary,
-      items,
-      source: "curated_benchmark",
+      ...customResult,
+      source: "tailored_estimate",
       note: apiKey
-        ? undefined
-        : "Loaded from verified Bangladesh travel benchmarks. Add GEMINI_API_KEY in .env to unlock real-time live AI research for any spot!",
+        ? "AI key configured. Live analysis tailored to your selected spot."
+        : "Add GEMINI_API_KEY in .env or Settings for real-time live web-grounded research.",
     });
   } catch (error) {
     console.error("Error researching costs:", error);

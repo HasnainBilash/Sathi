@@ -348,6 +348,7 @@ function TripDetailContent({
               initialGroupSize={currentMembers}
               initialItems={parsedCostItems}
               editable={false}
+              showPostTripButton={false}
             />
 
             {/* Secret Safety Guardrail Details */}

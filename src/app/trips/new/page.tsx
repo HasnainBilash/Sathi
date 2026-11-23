@@ -371,6 +371,7 @@ function NewTripContent() {
               }
               initialGroupSize={parseInt(form.maxGroupSize) || 4}
               onItemsChange={handleCostItemsChange}
+              showPostTripButton={false}
             />
           </div>
 
